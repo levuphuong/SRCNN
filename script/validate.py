@@ -29,7 +29,9 @@ def msssim(img1, img2, levels=5):
     weights = [0.0448, 0.2856, 0.3001, 0.2363, 0.1333]  # weights from the original MS-SSIM paper
     mssim = []
     for _ in range(levels):
-        mssim.append(ssim(img1, img2, data_range=1.0))
+        min_side = min(img1.shape)
+        win_size = 7 if min_side >= 7 else (min_side if min_side % 2 == 1 else min_side - 1)
+        mssim.append(ssim(img1, img2, data_range=1.0, win_size=win_size, channel_axis=None))
         img1 = cv2.pyrDown(img1)
         img2 = cv2.pyrDown(img2)
     return np.sum(np.array(mssim) * np.array(weights))
@@ -70,9 +72,10 @@ for file in os.listdir(set5_dir):
         y_cropped = y[border:h-border, border:w-border]
         pred_cropped = pred_y[0:y_cropped.shape[0], 0:y_cropped.shape[1]]
 
+
         # Compute quality metrics
         psnr_val = psnr(y_cropped, pred_cropped, data_range=1.0)
-        ssim_val = ssim(y_cropped, pred_cropped, data_range=1.0)
+        ssim_val = ssim(y_cropped, pred_cropped, data_range=1.0, channel_axis=-1)
         wpsnr_val = wpsnr(y_cropped, pred_cropped)
         msssim_val = msssim(y_cropped, pred_cropped)
         ifc_val = ifc_simple(y_cropped, pred_cropped)
